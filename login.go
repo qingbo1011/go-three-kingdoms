@@ -20,4 +20,5 @@ func main() {
 func init() {
 	log.Init()
 	conf.Init("./conf/config.ini")
+	login.Init()
 }

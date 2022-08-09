@@ -3,8 +3,10 @@ package net
 import (
 	"encoding/json"
 	"errors"
+	"go-three-kingdoms/util"
 	"sync"
 
+	"github.com/forgoer/openssl"
 	"github.com/gorilla/websocket"
 	logging "github.com/sirupsen/logrus"
 )
@@ -93,7 +95,25 @@ func (w *wsServer) readMsgLoop() {
 		}
 		// 收到消息，解析消息（前端发送过来的消息就是json格式）
 		// 1.data解压（unzip）
+		data, err = util.UnZip(data)
+		if err != nil {
+			logging.Info("解压数据出错，非法格式：", err)
+			continue
+		}
 		// 2.前端传来的消息是加密的消息，需要进行解密
+		secretKey, err := w.GetProperty("secretKey")
+		if err == nil { // 有加密
+			key := secretKey.(string)
+			// 客户端传过来的数据是加密的 需要解密
+			d, err := util.AesCBCDecrypt(data, []byte(key), []byte(key), openssl.ZEROS_PADDING)
+			if err != nil {
+				logging.Info("数据格式有误，解密失败:", err)
+				// 出错后，发起握手
+				//w.Handshake()
+			} else {
+				data = d
+			}
+		}
 		// 3.data转为body（json反序列化）
 		body := &ReqBody{}
 		err = json.Unmarshal(data, body)
@@ -102,7 +122,7 @@ func (w *wsServer) readMsgLoop() {
 		} else { // 获取到前端传递的数据了，拿上这些数据去具体的业务进行处理
 			req := &WsMsgReq{Conn: w, Body: body}
 			rsp := &WsMsgRsp{Body: &RspBody{Name: body.Name, Seq: req.Body.Seq}}
-
+			w.router.Run(req, rsp)
 			w.outChan <- rsp
 		}
 	}
@@ -118,16 +138,24 @@ func (w *wsServer) writeMsgLoop() {
 }
 
 func (w *wsServer) Write(msg *WsMsgRsp) {
-	//data, err := json.Marshal(msg.Body)
-	//if err!=nil {
-	//	logging.Info(err)
-	//}
-	//secretKey, err := w.GetProperty("secretKey")
-	//if err == nil { // 有加密
-	//	key := secretKey.(string)
-	//	// 数据做加密
-	//}
-
+	data, err := json.Marshal(msg.Body)
+	if err != nil {
+		logging.Info(err)
+	}
+	secretKey, err := w.GetProperty("secretKey")
+	if err == nil { // 有加密
+		key := secretKey.(string)
+		_, err := util.AesCBCEncrypt(data, []byte(key), []byte(key), openssl.ZEROS_PADDING) // 数据做加密
+		if err != nil {
+			logging.Info(err)
+		}
+	}
+	if data, err := util.Zip(data); err == nil { // 压缩
+		err := w.wsConn.WriteMessage(websocket.BinaryMessage, data)
+		if err != nil {
+			logging.Info(err)
+		}
+	}
 }
 
 func (w *wsServer) Close() {

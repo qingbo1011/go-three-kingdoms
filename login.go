@@ -2,7 +2,9 @@ package main
 
 import (
 	"go-three-kingdoms/conf"
+	"go-three-kingdoms/log"
 	"go-three-kingdoms/net"
+	"go-three-kingdoms/server/login"
 )
 
 // http://localhost:8003/api/login
@@ -11,9 +13,11 @@ import (
 
 func main() {
 	server := net.NewServer(conf.LoginHost + ":" + conf.LoginPort)
+	server.SetRouter(login.Router)
 	server.Start()
 }
 
 func init() {
+	log.Init()
 	conf.Init("./conf/config.ini")
 }

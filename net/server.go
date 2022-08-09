@@ -27,6 +27,10 @@ func (s *server) Start() {
 	}
 }
 
+func (s *server) SetRouter(router *Router) {
+	s.router = router
+}
+
 // http升级websocket协议的配置
 var wsUpgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { // 允许所有CORS跨域请求

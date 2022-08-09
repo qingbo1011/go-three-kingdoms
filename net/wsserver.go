@@ -11,6 +11,8 @@ import (
 	logging "github.com/sirupsen/logrus"
 )
 
+const HandshakeMsg = "handshake"
+
 // websocket服务
 type wsServer struct {
 	wsConn       *websocket.Conn
@@ -109,7 +111,7 @@ func (w *wsServer) readMsgLoop() {
 			if err != nil {
 				logging.Info("数据格式有误，解密失败:", err)
 				// 出错后，发起握手
-				//w.Handshake()
+				w.Handshake()
 			} else {
 				data = d
 			}
@@ -160,6 +162,39 @@ func (w *wsServer) Write(msg *WsMsgRsp) {
 
 func (w *wsServer) Close() {
 	err := w.wsConn.Close()
+	if err != nil {
+		logging.Info(err)
+	}
+}
+
+// Handshake 当游戏客户端发送请求的时候，会先进行握手协议。
+// 后端会发送对应的加密key给客户端，这样客户端在发送数据的时候就可以使用此key进行加密处理
+func (w *wsServer) Handshake() {
+	secretKey := ""
+	key, err := w.GetProperty("secretKey")
+	if err != nil {
+		secretKey = util.RandSeq(16) // 获取secretKey失败，随机生成一个长度为16的字符串
+	} else {
+		secretKey = key.(string)
+	}
+	handshake := &Handshake{Key: secretKey}
+	body := &RspBody{Name: HandshakeMsg, Msg: handshake}
+	data, err := json.Marshal(body)
+	if err != nil {
+		logging.Info(err)
+		return
+	}
+	if secretKey != "" {
+		w.SetProperty("secretKey", secretKey)
+	} else {
+		w.RemoveProperty("secretKey")
+	}
+	zipData, err := util.Zip(data)
+	if err != nil {
+		logging.Info(err)
+		return
+	}
+	err = w.wsConn.WriteMessage(websocket.BinaryMessage, zipData)
 	if err != nil {
 		logging.Info(err)
 	}

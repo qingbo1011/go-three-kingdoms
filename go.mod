@@ -3,6 +3,7 @@ module go-three-kingdoms
 go 1.18
 
 require (
+	github.com/forgoer/openssl v1.2.1
 	github.com/go-ini/ini v1.67.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/sirupsen/logrus v1.9.0

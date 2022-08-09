@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/go-ini/ini v1.67.0
+	github.com/gorilla/websocket v1.5.0
 	github.com/sirupsen/logrus v1.9.0
 )
 

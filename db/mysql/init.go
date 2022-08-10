@@ -16,7 +16,7 @@ var MysqlDB *gorm.DB
 func Init() {
 	// dsn := "root:123456@tcp(127.0.0.1:3308)/test?charset=utf8mb4&parseTime=True&loc=Local"
 	var builder strings.Builder
-	s := []string{conf.MysqlUser, ":", conf.MysqlPassword, "@tcp(", conf.MysqlHost, ":", conf.MysqlPort, ")/", conf.MysqlDataBase, "?charset=utf8mb4&parseTime=True&loc=Local"}
+	s := []string{conf.MysqlUser, ":", conf.MysqlPassword, "@tcp(", conf.MysqlHost, ":", conf.MysqlPort, ")/", conf.MysqlDataBase, "?charset=", conf.MysqlCharset, "&parseTime=True&loc=Local"}
 	for _, str := range s {
 		builder.WriteString(str)
 	}

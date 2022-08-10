@@ -16,6 +16,7 @@ func (a *Account) Router(r *net.Router) {
 }
 
 func (a *Account) login(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
+
 	rsp.Body.Code = 0
 	loginRes := &proto.LoginRsp{
 		Username: "admin",

@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"go-three-kingdoms/conf"
+	loginModel "go-three-kingdoms/server/login/model"
 	"strings"
 
 	logging "github.com/sirupsen/logrus"
@@ -49,7 +50,7 @@ func Init() {
 	sqlDB.SetMaxOpenConns(conf.MysqlMaxOpenConns)       // 设置数据库连接最大打开数
 	sqlDB.SetConnMaxLifetime(conf.MysqlConnMaxLifetime) // 设置可重用连接的最长时间
 
-	err = db.AutoMigrate() // 自动迁移
+	err = db.AutoMigrate(&loginModel.User{}) // 自动迁移
 	if err != nil {
 		logging.Info(err)
 	}

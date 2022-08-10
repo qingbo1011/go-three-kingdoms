@@ -2,6 +2,7 @@ package main
 
 import (
 	"go-three-kingdoms/conf"
+	"go-three-kingdoms/db/mysql"
 	"go-three-kingdoms/log"
 	"go-three-kingdoms/net"
 	"go-three-kingdoms/server/login"
@@ -20,5 +21,6 @@ func main() {
 func init() {
 	log.Init()
 	conf.Init("./conf/config.ini")
+	mysql.Init()
 	login.Init()
 }

@@ -147,7 +147,7 @@ func (w *wsServer) Write(msg *WsMsgRsp) {
 	secretKey, err := w.GetProperty("secretKey")
 	if err == nil { // 有加密
 		key := secretKey.(string)
-		_, err := util.AesCBCEncrypt(data, []byte(key), []byte(key), openssl.ZEROS_PADDING) // 数据做加密
+		data, err = util.AesCBCEncrypt(data, []byte(key), []byte(key), openssl.ZEROS_PADDING) // 数据做加密
 		if err != nil {
 			logging.Info(err)
 		}

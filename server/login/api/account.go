@@ -3,6 +3,9 @@ package api
 import (
 	"go-three-kingdoms/net"
 	"go-three-kingdoms/server/login/proto"
+
+	"github.com/mitchellh/mapstructure"
+	logging "github.com/sirupsen/logrus"
 )
 
 type Account struct {
@@ -16,12 +19,19 @@ func (a *Account) Router(r *net.Router) {
 }
 
 func (a *Account) login(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
-
-	rsp.Body.Code = 0
-	loginRes := &proto.LoginRsp{
-		Username: "admin",
-		Session:  "as",
-		UId:      1,
+	loginReq := &proto.LoginReq{}
+	//loginRes := &proto.LoginRsp{}
+	// mapstructure参考：https://github.com/mitchellh/mapstructure
+	err := mapstructure.Decode(req.Body.Msg, loginReq)
+	if err != nil {
+		logging.Info("mapstructure.Decode出现错误", err)
 	}
-	rsp.Body.Msg = loginRes
+
+	//rsp.Body.Code = 0
+	//loginRes := &proto.LoginRsp{
+	//	Username: "admin",
+	//	Session:  "as",
+	//	UId:      1,
+	//}
+	//rsp.Body.Msg = loginRes
 }

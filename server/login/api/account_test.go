@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"go-three-kingdoms/conf"
 	"go-three-kingdoms/db/mysql"
 	"go-three-kingdoms/log"
@@ -34,4 +35,14 @@ func TestRegister(t *testing.T) {
 	if err != nil {
 		logging.Info(err)
 	}
+}
+
+func TestSelectUserByUserName(t *testing.T) {
+	user := model.User{Username: "test"}
+	err := mysql.MysqlDB.Where(&user).First(&user).Error
+	if err != nil {
+		logging.Info(err)
+		return
+	}
+	fmt.Println(user)
 }

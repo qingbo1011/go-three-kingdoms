@@ -73,35 +73,35 @@ func (a *Account) login(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 	}
 	err = mysql.MysqlDB.Create(&loginHistory).Error
 	if err != nil {
-		logging.Info("存储登录信息出现错误", err)
+		logging.Info(err)
 	}
 
 	// 最后一次登录的状态记录（涉及到login_last表）
 	var lastLogin model.LoginLast
 	err = mysql.MysqlDB.Where("uid = ?", user.Uid).First(&lastLogin).Error
-	if err == gorm.ErrRecordNotFound { // 表中已有数据，需要更新数据
-		lastLogin.IsLogout = 0
-		lastLogin.Ip = loginReq.Ip
-		lastLogin.LoginTime = time.Now()
-		lastLogin.Session = token
-		lastLogin.Hardware = loginReq.Hardware
-		err := mysql.MysqlDB.Model(&lastLogin).Updates(lastLogin).Error
-		if err != nil {
-			logging.Info("MysqlDB.Model(&lastLogin).Updates(lastLogin)出错", err)
-		}
-	} else if err == nil { // 没有数据，要插入新数据
-		lastLogin.IsLogout = 0
+	if err == gorm.ErrRecordNotFound { // 没有数据，要插入新数据
+		lastLogin.IsLogout = constant.Login
 		lastLogin.Ip = loginReq.Ip
 		lastLogin.LoginTime = time.Now()
 		lastLogin.Session = token
 		lastLogin.Hardware = loginReq.Hardware
 		lastLogin.Uid = user.Uid
-		err := mysql.MysqlDB.Create(&lastLogin).Error
+		err := mysql.MysqlDB.Omit("logout_time").Create(&lastLogin).Error // 忽略logout_time字段
 		if err != nil {
-			logging.Info("MysqlDB.Create(&lastLogin)出错", err)
+			logging.Info(err)
+		}
+	} else if err == nil { // 表中已有数据，需要更新数据
+		lastLogin.IsLogout = constant.Login
+		lastLogin.Ip = loginReq.Ip
+		lastLogin.LoginTime = time.Now()
+		lastLogin.Session = token
+		lastLogin.Hardware = loginReq.Hardware
+		err := mysql.MysqlDB.Model(&lastLogin).Where("uid = ?", user.Uid).Updates(lastLogin).Error
+		if err != nil {
+			logging.Info(err)
 		}
 	} else {
-		logging.Info("MysqlDB.Where(\"uid = ?\", user.Uid).First(&lastLogin)出错", err)
+		logging.Info(err)
 	}
 
 	// 缓存此用户和当前的ws连接
